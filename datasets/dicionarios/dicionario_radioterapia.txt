@@ -1,0 +1,81 @@
+SEQ CAMPO TIPO E TAM DESCRIÇÃO
+1 AP_MVM CHAR (6) Data de Processamento / Movimento (AAAAMM)
+2 AP_CONDIC CHAR (2) Sigla do Tipo de Gestão no qual o Estado ou Município está habilitado
+3 AP_GESTAO CHAR (6) Código da Unidade de Federação + Código Município de Gestão ou UF0000 se a Unidade está sob Gestão
+Estadual
+4 AP_CODUNI CHAR (7) Código do Estabelecimento no CNES (Cadastro Nacional de Estabelecimentos de Saúde)
+5 AP_AUTORIZ CHAR (13) Número da APAC. Lei de formação: UFAATsssssssd, onde: UF – Unid. da Federação, AA – ano, T – tipo, sssssss –
+sequencial, d – dígito
+6 AP_CMP CHAR (6) Data de Atendimento ao paciente / Competência (AAAAMM)
+7 AP_PRIPAL CHAR (10) Procedimento Principal da APAC
+8 AP_VL_AP NUMERIC (20.2) Valor Total da APAC Aprovado
+9 AP_UFMUN CHAR (6) Código da Unidade da Federação + Código do Município do Estabelecimento
+10 AP_TPUPS CHAR (2) Tipo de Estabelecimento
+11 AP_TIPPRE CHAR (2) Tipo de Prestador
+12 AP_MN_IND CHAR (1) Estabelecimento Mantido / Individual
+13 AP_CNPJCPF CHAR (14) CNPJ do Estabelecimento executante
+14 AP_CNPJMNT CHAR (14) CNPJ MANTENEDORA
+15 AP_CNSPCN CHAR (15) Número do CNS (Cartão Nacional de Saúde) do paciente
+16 AP_COIDADE CHAR (1) Código da Idade
+17 AP_NUIDADE CHAR (2) Número da Idade
+18 AP_SEXO CHAR (1) Sexo do paciente
+19 AP_RACACOR CHAR (2) Raça/Cor do paciente: 01 - Branca, 02 - Preta, 03 - Parda, 04 - Amarela, 05 - Indígena, 99 - Sem informação
+20 AP_MUNPCN CHAR (6) Código da UF + Código do Município de Residência do paciente
+21 AP_UFNACIO CHAR (3) Nacionalidade do paciente
+22 AP_CEPPCN CHAR (8) CEP do paciente
+23 AP_UFDIF CHAR (2) Indica se a UF de residência do paciente é diferente da UF de localização do estabelecimento (N = não, S = sim)
+24 AP_MNDIF CHAR (1)
+Indica se o município de residência do paciente é diferente do município de localização do estabelecimento (N
+= não, S = sim)
+25 AP_DTINIC CHAR (8) Data de INÍCIO validade
+26 AP_DTFIM CHAR (8) Data de FIM validade
+27 AP_TPATEN CHAR (2) Tipo de Atendimento de APAC
+28 AP_TPAPAC CHAR (1) Indica se a APAC é 1 - inicial, 2 - continuidade, 3 - única
+29 AP_MOTSAI CHAR (2) Motivo de Saída e Permanência
+30 AP_OBITO CHAR (1) Indicador de Óbito
+31 AP_ENCERR CHAR (1) Indicador de Encerramento
+32 AP_PERMAN CHAR (1) Indicador de Permanência
+33 AP_ALTA CHAR (1) Indicador de Alta
+34 AP_TRANSF CHAR (1) Indicador de Transferência
+35 AP_DTOCOR CHAR (8) Data de Ocorrência que substitui a data de FIM de validade
+SEQ CAMPO TIPO E TAM DESCRIÇÃO
+36 AP_CODEMI CHAR (10) Código do Órgão emissor
+37 AP_CATEND CHAR (2) Caráter do Atendimento
+38 AP_APACANT CHAR (13) Número APAC Anterior
+39 AP_UNISOL CHAR (7) Código CNES do Estabelecimento Solicitante
+40 AP_DTSOLIC CHAR (8) Data da Solicitação
+41 AP_DTAUT CHAR (8) Data da Autorização
+42 AP_CIDCAS CHAR (4) CID Causas Associadas
+43 AP_CIDPRI CHAR (4) CID Principal
+44 AP_CIDSEC CHAR (4) CID Secundário
+45 AP_ETNIA CHAR (4) Etnia do paciente
+46 AR_SMRD CHAR (3)
+47 AR_CID10 CHAR (4) CID-10 - Topografia
+48 AR_LINFIN CHAR (1) Linfonodos regionais invadidos (S = Sim; N =Não; 3= Não Avaliáveis)
+49 AR_ESTADI CHAR (1) Estádio - UICC (0; 1; 2; 3; 4)
+50 AR_GRAHIS CHAR (2) Grau Histopatológico
+51 AR_DTIDEN CHAR (8) Data da identificação patológica do caso (AAAAMMDD)
+52 AR_TRANTE CHAR (1) Tratamentos anteriores (S = Sim; N = Não)
+53 AR_CIDINI1 CHAR (4) CID 1º Tratamento anterior
+54 AR_DTINI1 CHAR (8) Data de INÍCIO (AAAAMMDD) 1º tratamento anterior
+55 AR_CIDINI2 CHAR (4) CID 2º Tratamento anterior
+56 AR_DTINI2 CHAR (8) Data de INÍCIO (AAAAMMDD) 2º tratamento anterior
+57 AR_CIDINI3 CHAR (4) CID 3º Tratamento anterior
+58 AR_DTINI3 CHAR (8) Data de início (AAAAMMDD) 3º tratamento anterior
+59 AR_CONTTR CHAR (1) Continuidade do tratamento (S = Sim; N = Não)
+60 AR_DTINTR CHAR (8) Data de INÍCIO do tratamento solicitado (AAAAMMDD)
+61 AR_FINALI CHAR (1) Finalidade do Tratamento: (1 = RADICAL; 2 = ADJUVANTE; 3 = ANTIÁLGICA; 4 = PALIATIVA; 5 = PRÉVIA; 6 =
+ANTIHEMORRÁGICA)
+62 AR_CIDTR1 CHAR (4) CID Topográfico 1º
+63 AR_CIDTR2 CHAR (4) CID Topográfico 2º
+64 AR_CIDTR3 CHAR (4) CID Topográfico 3º
+65 AR_NUMC1 CHAR (3) Nº Campo/Inserções 1º
+66 AR_INIAR1 CHAR (8) Data de INÍCIO 1º (AAAAMMDD)
+67 AR_INIAR2 CHAR (8) Data de INÍCIO 2º (AAAAMMDD)
+68 AR_INIAR3 CHAR (8) Data de INÍCIO 3º (AAAAMMDD)
+69 AR_FIMAR1 CHAR (8) Data de Fim 1º (AAAAMMDD)
+70 AR_FIMAR2 CHAR (8) Data de FIM 2º (AAAAMMDD)
+71 AR_FIMAR3 CHAR (8) Data de Fim 3º (AAAAMMDD)
+72 AR_NUMC2 CHAR (3) Nº Campo/Inserções 2º
+73 AR_NUMC3 CHAR (3) Nº Campo/Inserções 3º
+74 AP_NATJUR CHAR (4) Código da Natureza Jurídica
