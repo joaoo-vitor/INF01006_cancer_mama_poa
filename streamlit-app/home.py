@@ -2,7 +2,8 @@ import streamlit as st
 from plots import (
     plot_chemotherapies_by_month_altair,
     plot_chemo_stage_comparison_altair,
-    plot_distribuicao_permanencia
+    plot_distribuicao_permanencia,
+    plot_hospitalizacoes_por_cid_altair
 )
 
 # Helper function to generate KPI cards
@@ -39,19 +40,24 @@ def render_home_page(df_aq, df_ar, df_rd, data_raw, selected_city, selected_mont
     
     c1, c2 = st.columns(2)
     with c1:
-        # Passa o df bruto da doença ativa, a filtragem de município e mês é feita internamente pelo plot_chemotherapies_by_month_altair
         chart_monthly = plot_chemotherapies_by_month_altair(data_raw[f"aq_{'mama' if disease == 'Câncer de Mama' else 'colo'}"], selected_city, selected_months, theme_color)
         st.altair_chart(chart_monthly, use_container_width=True)
     with c2:
-        # Passa os dfs brutos de colo e mama, a filtragem de município e mês é feita internamente
         chart_stages = plot_chemo_stage_comparison_altair(data_raw['aq_colo'], data_raw['aq_mama'], selected_city, selected_months)
         st.altair_chart(chart_stages, use_container_width=True)
         
-    st.markdown('<div class="section-title">🏥 Tempo de Permanência Hospitalar (SIH/SUS)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">🏥 Tempo de Permanência Hospitalar por CID (SIH/SUS)</div>', unsafe_allow_html=True)
     
     if not df_rd.empty:
-        # Passa o df bruto da doença ativa, a filtragem é interna
         chart_permanencia = plot_distribuicao_permanencia(data_raw[f"rd_{'mama' if disease == 'Câncer de Mama' else 'colo'}"], disease.replace("Câncer de ", ""), selected_city, selected_months)
         st.altair_chart(chart_permanencia, use_container_width=True)
+    else:
+        st.info("Nenhuma internação registrada para os filtros selecionados.")
+        
+    st.markdown('<div class="section-title">📊 Distribuição de Internações por CID (SIH/SUS)</div>', unsafe_allow_html=True)
+    
+    if not df_rd.empty:
+        chart_pie = plot_hospitalizacoes_por_cid_altair(data_raw[f"rd_{'mama' if disease == 'Câncer de Mama' else 'colo'}"], disease.replace("Câncer de ", ""), selected_city, selected_months)
+        st.altair_chart(chart_pie, use_container_width=True)
     else:
         st.info("Nenhuma internação registrada para os filtros selecionados.")

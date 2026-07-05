@@ -57,3 +57,8 @@ Nota (Linux/Windows): Se o comando pipenv não for reconhecido após a instalaç
 pipenv install
 ```
 Assim, um novo ambiente virtual será criado ("INF01006_cancer_mama_poa") e você poderá utilizá-lo para as análises desse repositório.
+
+## Como rodar o dashboard streamlit?
+```bash
+pipenv run streamlit run streamlit-app/app.py
+```

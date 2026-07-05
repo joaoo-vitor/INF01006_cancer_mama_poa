@@ -1,7 +1,32 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+import json
+import urllib.request
+import unicodedata
+import copy
 from plots import plot_residents_vs_non_residents_altair
+
+@st.cache_data
+def load_rs_geojson():
+    url = "https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-43-mun.json"
+    try:
+        with urllib.request.urlopen(url) as response:
+            geojson = json.loads(response.read().decode('utf-8', errors='ignore'))
+        return geojson
+    except Exception as e:
+        st.error(f"Erro ao carregar o mapa de municípios do Rio Grande do Sul: {e}")
+        return None
+
+def normalize_name(name):
+    if not name:
+        return ""
+    n = str(name).lower().strip()
+    # Normalize unicode to strip accents
+    n = ''.join(c for c in unicodedata.normalize('NFD', n) if unicodedata.category(c) != 'Mn')
+    # Replace common spelling anomalies
+    n = n.replace('-', ' ').replace("'", "")
+    return n
 
 def render_geographic_page(data_raw, filter_sia_func, filter_sih_func, selected_months, theme_color, disease, RS_CITY_COORDS):
     st.markdown(f'<div class="section-title">🗺️ Volume e Fluxo de Atendimentos no Rio Grande do Sul - {disease}</div>', unsafe_allow_html=True)
@@ -27,58 +52,93 @@ def render_geographic_page(data_raw, filter_sia_func, filter_sih_func, selected_
         ["Quimioterapia (SIA)", "Radioterapia (SIA)", "Internações (SIH)"]
     )
     
-    # Montar contagem por município prestador
-    map_df = pd.DataFrame()
+    # Calcular contagens por município prestador
+    counts = {}
     if map_metric == "Quimioterapia (SIA)" and not df_aq_f.empty:
-        city_counts = df_aq_f['AP_UFMUN'].dropna().value_counts().reset_index()
-        city_counts.columns = ['municipio', 'quantidade']
+        counts = df_aq_f['AP_UFMUN'].dropna().astype(str).apply(normalize_name).value_counts().to_dict()
     elif map_metric == "Radioterapia (SIA)" and not df_ar_f.empty:
-        city_counts = df_ar_f['AP_UFMUN'].dropna().value_counts().reset_index()
-        city_counts.columns = ['municipio', 'quantidade']
+        counts = df_ar_f['AP_UFMUN'].dropna().astype(str).apply(normalize_name).value_counts().to_dict()
     elif not df_rd_f.empty:
-        city_counts = df_rd_f['MUNIC_MOV'].dropna().value_counts().reset_index()
-        city_counts.columns = ['municipio', 'quantidade']
-    else:
-        city_counts = pd.DataFrame(columns=['municipio', 'quantidade'])
+        counts = df_rd_f['MUNIC_MOV'].dropna().astype(str).apply(normalize_name).value_counts().to_dict()
         
-    if not city_counts.empty:
-        lats, lons, quants, names = [], [], [], []
-        for _, row in city_counts.iterrows():
-            m_key = str(row['municipio']).lower().strip()
-            if m_key in RS_CITY_COORDS:
-                coords = RS_CITY_COORDS[m_key]
-                lats.append(coords[0])
-                lons.append(coords[1])
-                quants.append(row['quantidade'])
-                names.append(str(row['municipio']).title())
-                
-        map_df = pd.DataFrame({
-            'lat': lats,
-            'lon': lons,
-            'quantidade': quants,
-            'municipio': names
-        })
+    st.markdown('<div class="section-title">📍 Mapa Coroplético da Concentração de Atendimentos (RS)</div>', unsafe_allow_html=True)
+    
+    # Carrega GeoJSON
+    geojson = load_rs_geojson()
+    
+    if geojson and counts:
+        # Clona os dados do cache para evitar efeitos colaterais
+        geojson_data = copy.deepcopy(geojson)
         
-    st.markdown('<div class="section-title">📍 Concentração Geográfica dos Atendimentos Oncológicos</div>', unsafe_allow_html=True)
-    if not map_df.empty:
-        max_q = map_df['quantidade'].max()
-        map_df['tamanho'] = map_df['quantidade'].apply(lambda x: 10 + (x / max_q) * 200)
+        # Insere a quantidade correspondente em cada feição do mapa
+        for feature in geojson_data['features']:
+            raw_name = feature['properties']['name']
+            norm_name = normalize_name(raw_name)
+            feature['properties']['Quantidade'] = counts.get(norm_name, 0)
+            feature['properties']['Nome'] = raw_name.title()
+            
+        # Converte para estrutura compatível do Altair (FeatureCollection completo)
+        geodata = alt.Data(values=geojson_data)
         
-        # Mapa
-        st.map(map_df, latitude='lat', longitude='lon', size='tamanho', color=theme_color)
+        is_mama = disease == "Câncer de Mama"
+        color_scheme = 'purplered' if is_mama else 'blues'
         
-        # Tabela ordenada
-        st.dataframe(
-            map_df[['municipio', 'quantidade']].sort_values(by='quantidade', ascending=False),
-            column_config={
-                "municipio": "Município Executor do Tratamento",
-                "quantidade": st.column_config.NumberColumn("Total de Procedimentos", format="%d")
-            },
-            use_container_width=True,
-            hide_index=True
+        # 1. Camada de fundo: desenha todos os municípios em cinza claro para servir de contorno base
+        background = alt.Chart(geodata).mark_geoshape(
+            fill='#f4f4f4',
+            stroke='#ffffff',
+            strokeWidth=0.3
         )
+        
+        # 2. Camada de dados: desenha apenas os municípios com atendimentos > 0
+        foreground = alt.Chart(geodata).mark_geoshape(
+            stroke='#ffffff',
+            strokeWidth=0.4
+        ).encode(
+            color=alt.Color(
+                'properties.Quantidade:Q',
+                title='Procedimentos',
+                scale=alt.Scale(scheme=color_scheme)
+            ),
+            tooltip=[
+                alt.Tooltip('properties.Nome:N', title='Município'),
+                alt.Tooltip('properties.Quantidade:Q', title='Procedimentos', format=',d')
+            ]
+        ).transform_filter(
+            'datum.properties.Quantidade > 0'
+        )
+        
+        # Cria o mapa coroplético no Altair combinando as duas camadas e aplicando a projeção explicitamente centrada no RS
+        choropleth = (background + foreground).project(
+            type='mercator',
+            center=[-53.5, -30.0],
+            scale=4500
+        ).properties(
+            width='container',
+            height=500
+        )
+        
+        st.altair_chart(choropleth, use_container_width=True)
+        
+        # Exibe a tabela ordenada das cidades com atendimentos registrados
+        st.markdown('**Detalhamento dos Atendimentos por Município Prestador:**')
+        table_data = pd.DataFrame([
+            {"municipio": key.title(), "quantidade": val}
+            for key, val in counts.items() if val > 0
+        ]).sort_values(by='quantidade', ascending=False)
+        
+        if not table_data.empty:
+            st.dataframe(
+                table_data,
+                column_config={
+                    "municipio": "Município Executor do Tratamento",
+                    "quantidade": st.column_config.NumberColumn("Total de Procedimentos", format="%d")
+                },
+                use_container_width=True,
+                hide_index=True
+            )
     else:
-        st.warning("Sem dados de geolocalização no período selecionado.")
+        st.warning("Sem dados disponíveis ou falha ao carregar as geometrias do estado.")
         
     # Centralização e Fluxo na Capital (Porto Alegre)
     st.markdown('<div class="section-title">✈️ Fluxo Migratório Hospitalar (Interior ➔ Porto Alegre)</div>', unsafe_allow_html=True)
@@ -91,10 +151,8 @@ def render_geographic_page(data_raw, filter_sia_func, filter_sih_func, selected_
     
     col_geo1, col_geo2 = st.columns(2)
     with col_geo1:
-        # Passa o df bruto, a filtragem é interna
         chart_res_chemo = plot_residents_vs_non_residents_altair(df_aq, "Quimioterapia", "Porto Alegre", selected_months)
         st.altair_chart(chart_res_chemo, use_container_width=True)
     with col_geo2:
-        # Passa o df bruto, a filtragem é interna
         chart_res_radio = plot_residents_vs_non_residents_altair(df_ar, "Radioterapia", "Porto Alegre", selected_months)
         st.altair_chart(chart_res_radio, use_container_width=True)

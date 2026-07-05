@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import altair as alt
 
+# Desativa o limite de 5000 linhas do Altair para evitar MaxRowsError no Jupyter Notebook
+alt.data_transformers.disable_max_rows()
+
 def plot_chemotherapies_by_month(df, city='Porto Alegre', months=None):
     """
     Gera um gráfico de barras e linha mostrando o número de quimioterapias realizadas 
@@ -599,6 +602,7 @@ def plot_distribuicao_permanencia(df, tipo_cancer="", city='Porto Alegre', month
     """
     Gera um gráfico boxplot de distribuição do tempo de permanência hospitalar (DIAS_PERM)
     por Diagnóstico Principal (DIAG_PRINC) utilizando o Altair.
+    Garante que todos os rótulos do eixo X (CID-10) apareçam.
     """
     df_filtered = df.copy()
     if city and city != "Todo o Estado":
@@ -615,13 +619,18 @@ def plot_distribuicao_permanencia(df, tipo_cancer="", city='Porto Alegre', month
     
     boxplot = alt.Chart(df_plot).mark_boxplot(
         extent='min-max',
-        size=40,
+        size=45,
         color='#2b5c8f'
     ).encode(
         x=alt.X(
             'DIAG_PRINC:N', 
             title='Diagnóstico Principal (CID-10)',
-            axis=alt.Axis(labelAngle=-15, labelLimit=250)
+            axis=alt.Axis(
+                labelAngle=-45, 
+                labelLimit=0, 
+                labelOverlap=False,
+                labelFontSize=10
+            )
         ),
         y=alt.Y(
             'DIAS_PERM:Q', 
@@ -633,8 +642,51 @@ def plot_distribuicao_permanencia(df, tipo_cancer="", city='Porto Alegre', month
         ]
     ).properties(
         title={
-            "text": f"Tempo de Permanência Hospitalar - Câncer de {tipo_cancer}",
+            "text": f"Tempo de Permanência Hospitalar por CID - Câncer de {tipo_cancer}",
             "subtitle": f"Internações SIH/SUS no município de {location_label}"
+        },
+        width=800,
+        height=500
+    ).configure_title(
+        fontSize=15,
+        subtitleFontSize=11,
+        anchor='start'
+    )
+    
+    return boxplot
+
+def plot_hospitalizacoes_por_cid_altair(df, tipo_cancer="", city='Porto Alegre', months=None):
+    """
+    Gera um gráfico de pizza mostrando a quantidade de internações por Diagnóstico Principal (DIAG_PRINC/CID-10).
+    """
+    df_filtered = df.copy()
+    if city and city != "Todo o Estado":
+        df_filtered = df_filtered[df_filtered['MUNIC_MOV'].astype(str).str.lower().str.strip() == city.lower().strip()]
+    if months:
+        df_filtered['ANO_MES'] = df_filtered['ANO_CMPT'].astype(int) * 100 + df_filtered['MES_CMPT'].astype(int)
+        start_m = 202500 + months[0]
+        end_m = 202500 + months[1]
+        df_filtered = df_filtered[(df_filtered['ANO_MES'] >= start_m) & (df_filtered['ANO_MES'] <= end_m)]
+        
+    df_plot = df_filtered[['DIAG_PRINC']].dropna()
+    
+    location_label = city if city else "Rio Grande do Sul"
+    
+    pie = alt.Chart(df_plot).mark_arc().encode(
+        theta=alt.Theta('count():Q', title='Quantidade de Internações'),
+        color=alt.Color(
+            'DIAG_PRINC:N', 
+            title='Código CID-10', 
+            scale=alt.Scale(scheme='tableau10')
+        ),
+        tooltip=[
+            alt.Tooltip('DIAG_PRINC:N', title='CID-10'),
+            alt.Tooltip('count():Q', title='Internações')
+        ]
+    ).properties(
+        title={
+            "text": f"Distribuição de Internações por CID - Câncer de {tipo_cancer}",
+            "subtitle": f"Volume total e proporcional de internações hospitalares em {location_label} (SIH/SUS)"
         },
         width='container',
         height=380
@@ -644,7 +696,7 @@ def plot_distribuicao_permanencia(df, tipo_cancer="", city='Porto Alegre', month
         anchor='start'
     )
     
-    return boxplot
+    return pie
 
 def plot_custos_hospitalares(df, tipo_cancer="", city='Porto Alegre', months=None):
     """
