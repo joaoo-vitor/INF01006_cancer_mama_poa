@@ -18,7 +18,7 @@ def aggregate_csvs(directory, file_filter, output_path):
         print(f"No files found matching pattern: {search_pattern}")
         return
 
-    print(f"📂 Found {len(files)} files to aggregate...")
+    print(f"Found {len(files)} files to aggregate...")
 
     # Read and combine all CSV files
     df_list = []
@@ -30,7 +30,7 @@ def aggregate_csvs(directory, file_filter, output_path):
 
     # Save the aggregated file
     combined_df.to_csv(output_path, index=False)
-    print(f"✅ Success! Aggregated file saved to: {output_path}")
+    print(f"Success! Aggregated file saved to: {output_path}")
 
 
 if __name__ == "__main__":
