@@ -10,6 +10,7 @@ numpy = "*"
 altair = "*"
 streamlit = "*"
 ipykernel = "*"
+watchdog = "*"
 
 [dev-packages]
 

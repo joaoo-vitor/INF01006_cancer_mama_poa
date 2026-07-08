@@ -77,8 +77,12 @@ def render_geographic_page(data_raw, filter_sia_func, filter_sih_func, selected_
             feature['properties']['Quantidade'] = counts.get(norm_name, 0)
             feature['properties']['Nome'] = raw_name.title()
             
-        # Converte para estrutura compatível do Altair (FeatureCollection completo)
-        geodata = alt.Data(values=geojson_data)
+        import base64
+        # Converte o GeoJSON para uma URL base64 para evitar que o Streamlit converta em DataFrame incorretamente
+        geojson_str = json.dumps(geojson_data)
+        geojson_base64 = base64.b64encode(geojson_str.encode('utf-8')).decode('utf-8')
+        geojson_url = f"data:application/json;base64,{geojson_base64}"
+        geodata = alt.Data(url=geojson_url, format=alt.DataFormat(property='features', type='json'))
         
         is_mama = disease == "Câncer de Mama"
         color_scheme = 'purplered' if is_mama else 'blues'
@@ -105,7 +109,7 @@ def render_geographic_page(data_raw, filter_sia_func, filter_sih_func, selected_
                 alt.Tooltip('properties.Quantidade:Q', title='Procedimentos', format=',d')
             ]
         ).transform_filter(
-            'datum.properties.Quantidade > 0'
+            'datum.properties && datum.properties.Quantidade > 0'
         )
         
         # Cria o mapa coroplético no Altair combinando as duas camadas e aplicando a projeção explicitamente centrada no RS
