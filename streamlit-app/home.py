@@ -44,7 +44,9 @@ def render_home_page(df_aq, df_ar, df_rd, data_raw, selected_city, selected_mont
         st.altair_chart(chart_monthly, use_container_width=True)
     with c2:
         chart_stages = plot_chemo_stage_comparison_altair(data_raw['aq_colo'], data_raw['aq_mama'], selected_city, selected_months)
-        st.altair_chart(chart_stages, use_container_width=True)
+        col_l, col_c, col_r = st.columns([1, 5, 1])
+        with col_c:
+            st.altair_chart(chart_stages, use_container_width=False)
         
     st.markdown('<div class="section-title">🏥 Tempo de Permanência Hospitalar por CID (SIH/SUS)</div>', unsafe_allow_html=True)
     
@@ -58,6 +60,6 @@ def render_home_page(df_aq, df_ar, df_rd, data_raw, selected_city, selected_mont
     
     if not df_rd.empty:
         chart_pie = plot_hospitalizacoes_por_cid_altair(data_raw[f"rd_{'mama' if disease == 'Câncer de Mama' else 'colo'}"], disease.replace("Câncer de ", ""), selected_city, selected_months)
-        st.altair_chart(chart_pie, use_container_width=True)
+        st.altair_chart(chart_pie)
     else:
         st.info("Nenhuma internação registrada para os filtros selecionados.")

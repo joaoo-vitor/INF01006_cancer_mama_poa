@@ -601,8 +601,8 @@ def plot_chemo_stage_comparison(df_colo, df_mama, city='Porto Alegre', months=No
 def plot_distribuicao_permanencia(df, tipo_cancer="", city='Porto Alegre', months=None):
     """
     Gera um gráfico boxplot de distribuição do tempo de permanência hospitalar (DIAS_PERM)
-    por Diagnóstico Principal (DIAG_PRINC) utilizando o Altair.
-    Garante que todos os rótulos do eixo X (CID-10) apareçam.
+    por Diagnóstico Principal (DIAG_PRINC) de forma horizontal utilizando o Altair.
+    Garante que todos os rótulos do eixo Y (CID-10) apareçam legivelmente.
     """
     df_filtered = df.copy()
     if city and city != "Todo o Estado":
@@ -619,20 +619,18 @@ def plot_distribuicao_permanencia(df, tipo_cancer="", city='Porto Alegre', month
     
     boxplot = alt.Chart(df_plot).mark_boxplot(
         extent='min-max',
-        size=45,
+        size=20,
         color='#2b5c8f'
     ).encode(
-        x=alt.X(
+        y=alt.Y(
             'DIAG_PRINC:N', 
             title='Diagnóstico Principal (CID-10)',
+            scale=alt.Scale(padding=0.5),
             axis=alt.Axis(
-                labelAngle=-45, 
-                labelLimit=0, 
-                labelOverlap=False,
                 labelFontSize=10
             )
         ),
-        y=alt.Y(
+        x=alt.X(
             'DIAS_PERM:Q', 
             title='Tempo de Permanência (Dias)'
         ),
@@ -645,8 +643,8 @@ def plot_distribuicao_permanencia(df, tipo_cancer="", city='Porto Alegre', month
             "text": f"Tempo de Permanência Hospitalar por CID - Câncer de {tipo_cancer}",
             "subtitle": f"Internações SIH/SUS no município de {location_label}"
         },
-        width=800,
-        height=500
+        width='container',
+        height=350
     ).configure_title(
         fontSize=15,
         subtitleFontSize=11,
@@ -734,7 +732,12 @@ def plot_custos_hospitalares(df, tipo_cancer="", city='Porto Alegre', months=Non
         x=alt.X(
             'DIAG_PRINC:N', 
             title='Diagnóstico Principal (CID-10)',
-            axis=alt.Axis(labelAngle=-15, labelLimit=250)
+            axis=alt.Axis(
+                labelAngle=-45, 
+                labelLimit=0, 
+                labelOverlap=False,
+                labelFontSize=10
+            )
         ),
         y=alt.Y(
             'Valor (R$):Q', 
@@ -756,11 +759,11 @@ def plot_custos_hospitalares(df, tipo_cancer="", city='Porto Alegre', months=Non
             "subtitle": f"Valores acumulados de internações no município de {location_label}"
         },
         width='container',
-        height=380
+        height=550
     ).configure_title(
         fontSize=15,
         subtitleFontSize=11,
-        anchor='start'
+        anchor='middle'
     )
     
     return grafico_barras
@@ -979,7 +982,7 @@ def plot_residents_vs_non_residents_altair(df, treatment_type="Quimioterapia", c
 
 def plot_chemo_stage_comparison_altair(df_colo, df_mama, city='Porto Alegre', months=None):
     """
-    Gera um gráfico comparativo de estadiamento UICC no Altair.
+    Gera dois gráficos de pizza (rosca) lado a lado no Altair compartilhando a mesma legenda.
     """
     df_colo_poa = df_colo.copy()
     df_mama_poa = df_mama.copy()
@@ -1008,25 +1011,113 @@ def plot_chemo_stage_comparison_altair(df_colo, df_mama, city='Porto Alegre', mo
     mama_stages.columns = ['Estagio', 'Quantidade']
     mama_stages['Cancer'] = 'Câncer de Mama'
     
-    df_stages = pd.concat([colo_stages, mama_stages], ignore_index=True)
-    
+    # Common color scale definition
+    color_scale = alt.Scale(
+        domain=['Inicial (Estágios 0-2)', 'Avançado (Estágios 3-4)'],
+        range=['#008080', '#e57373'] # Teal and Soft Red
+    )
+
+    if colo_stages.empty:
+        colo_stages = pd.DataFrame(columns=['Estagio', 'Quantidade', 'Cancer', 'Porcentagem'])
+    else:
+        total_colo = colo_stages['Quantidade'].sum()
+        colo_stages['Porcentagem'] = colo_stages['Quantidade'] / total_colo if total_colo > 0 else 0.0
+
+    if mama_stages.empty:
+        mama_stages = pd.DataFrame(columns=['Estagio', 'Quantidade', 'Cancer', 'Porcentagem'])
+    else:
+        total_mama = mama_stages['Quantidade'].sum()
+        mama_stages['Porcentagem'] = mama_stages['Quantidade'] / total_mama if total_mama > 0 else 0.0
+
     location_label = city if city else "Rio Grande do Sul"
-    
-    chart = alt.Chart(df_stages).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
-        x=alt.X('Cancer:N', title='Tipo de Câncer'),
-        y=alt.Y('Quantidade:Q', stack='normalize', title='Proporção de Casos', axis=alt.Axis(format='%')),
-        color=alt.Color('Estagio:N', scale=alt.Scale(domain=['Inicial (Estágios 0-2)', 'Avançado (Estágios 3-4)'], range=['#008080', '#e57373']), title='Estágio UICC'),
-        tooltip=[alt.Tooltip('Cancer:N', title='Câncer'), alt.Tooltip('Estagio:N', title='Estágio'), alt.Tooltip('Quantidade:Q', title='Casos')]
+
+    # Donut Chart for Colo
+    if not colo_stages.empty:
+        chart_colo = alt.Chart(colo_stages).mark_arc(innerRadius=50, outerRadius=90).encode(
+            theta=alt.Theta(field='Quantidade', type='quantitative'),
+            color=alt.Color(field='Estagio', type='nominal', scale=color_scale, title='Estágio UICC'),
+            tooltip=[
+                alt.Tooltip('Cancer:N', title='Câncer'),
+                alt.Tooltip('Estagio:N', title='Estágio'),
+                alt.Tooltip('Quantidade:Q', title='Casos'),
+                alt.Tooltip('Porcentagem:Q', title='Porcentagem', format='.1%')
+            ]
+        ).properties(
+            title={
+                "text": "Colo de Útero",
+                "subtitle": f"Total: {colo_stages['Quantidade'].sum():,}".replace(',', '.'),
+                "anchor": "middle"
+            },
+            width=200,
+            height=250
+        )
+    else:
+        chart_colo = alt.Chart(pd.DataFrame({'Estagio': ['Sem dados'], 'Quantidade': [1]})).mark_arc(innerRadius=50, outerRadius=90).encode(
+            theta=alt.Theta(field='Quantidade', type='quantitative'),
+            color=alt.value('#e0e0e0'),
+            tooltip=[alt.Tooltip('Estagio:N', title='Status')]
+        ).properties(
+            title={
+                "text": "Colo de Útero (Sem dados)",
+                "anchor": "middle"
+            },
+            width=200,
+            height=250
+        )
+
+    # Donut Chart for Mama
+    if not mama_stages.empty:
+        chart_mama = alt.Chart(mama_stages).mark_arc(innerRadius=50, outerRadius=90).encode(
+            theta=alt.Theta(field='Quantidade', type='quantitative'),
+            color=alt.Color(field='Estagio', type='nominal', scale=color_scale, title='Estágio UICC'),
+            tooltip=[
+                alt.Tooltip('Cancer:N', title='Câncer'),
+                alt.Tooltip('Estagio:N', title='Estágio'),
+                alt.Tooltip('Quantidade:Q', title='Casos'),
+                alt.Tooltip('Porcentagem:Q', title='Porcentagem', format='.1%')
+            ]
+        ).properties(
+            title={
+                "text": "Câncer de Mama",
+                "subtitle": f"Total: {mama_stages['Quantidade'].sum():,}".replace(',', '.'),
+                "anchor": "middle"
+            },
+            width=200,
+            height=250
+        )
+    else:
+        chart_mama = alt.Chart(pd.DataFrame({'Estagio': ['Sem dados'], 'Quantidade': [1]})).mark_arc(innerRadius=50, outerRadius=90).encode(
+            theta=alt.Theta(field='Quantidade', type='quantitative'),
+            color=alt.value('#e0e0e0'),
+            tooltip=[alt.Tooltip('Estagio:N', title='Status')]
+        ).properties(
+            title={
+                "text": "Câncer de Mama (Sem dados)",
+                "anchor": "middle"
+            },
+            width=200,
+            height=250
+        )
+
+    # Combine charts with shared legend
+    combined = alt.hconcat(
+        chart_colo, chart_mama, spacing=40
+    ).resolve_scale(
+        color='shared'
     ).properties(
         title={
             "text": f"Estadiamento no Início da Quimioterapia em {location_label} (2025)",
-            "subtitle": "Comparativo proporcional de Diagnóstico Precoce vs. Diagnóstico Tardio"
-        },
-        width='container',
-        height=380
+            "subtitle": "Comparativo proporcional de Diagnóstico Precoce (Estágios 0-2) vs. Diagnóstico Tardio (Estágios 3-4)"
+        }
     ).configure_title(
         fontSize=15,
         subtitleFontSize=11,
-        anchor='start'
+        anchor='middle'
+    ).configure_legend(
+        orient='bottom',
+        columns=2,
+        titleFontSize=11,
+        labelFontSize=10
     )
-    return chart
+
+    return combined

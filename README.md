@@ -59,6 +59,7 @@ pipenv install
 Assim, um novo ambiente virtual será criado ("INF01006_cancer_mama_poa") e você poderá utilizá-lo para as análises desse repositório.
 
 ## Como rodar o dashboard streamlit?
+O projeto consiste em dashboard interativo usando a biblioteca [Streamlit](https://streamlit.io/components). Para rodá-lo, basta rodar o comando
 ```bash
 pipenv run streamlit run streamlit-app/app.py
 ```
