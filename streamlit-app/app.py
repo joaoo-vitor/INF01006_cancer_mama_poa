@@ -15,6 +15,7 @@ from financial import render_financial_page
 from demographic import render_demographic_page
 from geographic import render_geographic_page
 from exams import render_exams_page
+from treatments import render_treatments_page
 from patients import render_patients_page
 
 # Configuração da página do Streamlit
@@ -264,13 +265,14 @@ st.markdown('<div class="page-title">🎗️ Painel de Tratamento do Câncer de 
 st.markdown(f'<div class="page-subtitle">Análise integrada do tratamento de Câncer de Mama e Câncer de Colo de Útero em 2025 pelo SUS no RS com foco em Porto Alegre.</div>', unsafe_allow_html=True)
 
 # Definição das Abas dentro da página
-tab_home, tab_finance, tab_demo, tab_geo, tab_patients, tab_exams = st.tabs([
+tab_home, tab_finance, tab_demo, tab_geo, tab_patients, tab_exams, tab_treatments = st.tabs([
     "🏠 Página Inicial", 
     "💸 Informações Financeiras", 
     "👥 Informações Demográficas", 
-    "🗺️ Análise Geográfica",
+    "🗺️ Análise Geográfica", 
     "🧍 Pacientes Únicos",
-    "🔬 Exames (SISCAN)"
+    "🔬 Exames (SISCAN)",
+    "Tratamentos"
 ])
 
 
@@ -347,4 +349,17 @@ with tab_exams:
     render_exams_page(
         disease=disease,
         theme_color=theme_color
+    )
+
+with tab_treatments:
+    df_aq_f = filter_sia_data(data[f'aq_{disease_suffix}'], selected_city, selected_months)
+    df_ar_f = filter_sia_data(data[f'ar_{disease_suffix}'], selected_city, selected_months)
+
+    render_treatments_page(
+        df_aq=df_aq_f,
+        df_ar=df_ar_f,
+        selected_city=selected_city,
+        selected_months=selected_months,
+        theme_color=theme_color,
+        disease=disease
     )
