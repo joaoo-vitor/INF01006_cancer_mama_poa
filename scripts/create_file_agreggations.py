@@ -15,7 +15,7 @@ def aggregate_csvs(directory, file_filter, output_path):
     files = sorted(glob.glob(search_pattern))
 
     if not files:
-        print(f"❌ No files found matching pattern: {search_pattern}")
+        print(f"No files found matching pattern: {search_pattern}")
         return
 
     print(f"📂 Found {len(files)} files to aggregate...")
