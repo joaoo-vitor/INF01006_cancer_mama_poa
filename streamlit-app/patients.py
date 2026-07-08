@@ -22,10 +22,21 @@ def normalize_patient_id(series):
         .str.replace(r"\.0$", "", regex=True)
     )
 
-    # Mantém apenas números
-    ids = ids[ids.str.fullmatch(r"\d{15}", na=False)]
+    # Remove valores vazios ou nulos escritos como texto
+    ids = ids[
+        ~ids.str.lower().isin([
+            "",
+            "nan",
+            "none",
+            "null",
+            "na",
+            "não informado",
+            "nao informado",
+            "ignorado",
+            "ignorada"
+        ])
+    ]
 
-    # Remove placeholders óbvios
     invalidos = {
         "000000000000000",
         "111111111111111",
@@ -40,6 +51,12 @@ def normalize_patient_id(series):
     }
 
     ids = ids[~ids.isin(invalidos)]
+
+    def identificador_repetido(valor):
+        valor = str(valor).strip()
+        return len(valor) >= 6 and len(set(valor)) == 1
+
+    ids = ids[~ids.apply(identificador_repetido)]
 
     return ids
 
