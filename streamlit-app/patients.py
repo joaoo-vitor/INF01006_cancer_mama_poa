@@ -295,21 +295,72 @@ def render_patients_page(df_aq, df_ar, df_rd, selected_city, selected_months, th
             hide_index=True
         )
 
-    st.markdown('<div class="section-title">👤 Pacientes com maior número de procedimentos</div>', unsafe_allow_html=True)
+        st.markdown(
+        '<div class="section-title">📌 Distribuição da intensidade de tratamento por paciente</div>',
+        unsafe_allow_html=True
+    )
 
-    ranking = patients_df.groupby("paciente_id").agg(
-        total_procedimentos=("modalidade", "count"),
-        modalidades=("modalidade", lambda x: ", ".join(sorted(set(x))))
+    intensidade = patients_df.groupby("paciente_id").agg(
+        total_procedimentos=("modalidade", "count")
     ).reset_index()
 
-    ranking = ranking.sort_values("total_procedimentos", ascending=False).head(20)
+    def classificar_faixa(qtd):
+        if qtd == 1:
+            return "1 procedimento"
+        elif qtd <= 5:
+            return "2 a 5 procedimentos"
+        elif qtd <= 10:
+            return "6 a 10 procedimentos"
+        elif qtd <= 20:
+            return "11 a 20 procedimentos"
+        else:
+            return "Mais de 20 procedimentos"
+
+    intensidade["Faixa"] = intensidade["total_procedimentos"].apply(classificar_faixa)
+
+    faixas_ordem = [
+        "1 procedimento",
+        "2 a 5 procedimentos",
+        "6 a 10 procedimentos",
+        "11 a 20 procedimentos",
+        "Mais de 20 procedimentos"
+    ]
+
+    faixa_df = (
+        intensidade["Faixa"]
+        .value_counts()
+        .reindex(faixas_ordem, fill_value=0)
+        .reset_index()
+    )
+
+    faixa_df.columns = ["Faixa de procedimentos", "Pacientes"]
+
+    chart_faixas = alt.Chart(faixa_df).mark_bar(
+        cornerRadiusTopLeft=4,
+        cornerRadiusTopRight=4,
+        color=theme_color
+    ).encode(
+        x=alt.X(
+            "Faixa de procedimentos:N",
+            sort=faixas_ordem,
+            title="Quantidade de procedimentos no ano"
+        ),
+        y=alt.Y("Pacientes:Q", title="Pacientes únicos"),
+        tooltip=[
+            alt.Tooltip("Faixa de procedimentos:N"),
+            alt.Tooltip("Pacientes:Q", title="Pacientes")
+        ]
+    ).properties(
+        height=350
+    )
+
+    st.altair_chart(chart_faixas, use_container_width=True)
 
     st.dataframe(
-        ranking,
+        faixa_df,
         column_config={
-            "paciente_id": "Paciente",
-            "total_procedimentos": st.column_config.NumberColumn("Total de procedimentos", format="%d"),
-            "modalidades": "Modalidades"
+            "Faixa de procedimentos": "Faixa de procedimentos no ano",
+            "Pacientes": st.column_config.NumberColumn("Pacientes únicos", format="%d")
         },
         use_container_width=True,
         hide_index=True
