@@ -3,18 +3,7 @@ import pandas as pd
 import altair as alt
 from plots import plot_custos_hospitalares
 
-COLOR_MAMA = '#d63384'
-COLOR_COLO = '#008080'
-
-# Helper function to generate KPI cards
-def make_kpi_card(title, value, subtitle="", border_color="#d63384"):
-    return f"""
-    <div class="kpi-card" style="border-left: 5px solid {border_color}; font-family: 'Inter', sans-serif;">
-        <div class="kpi-title">{title}</div>
-        <div class="kpi-value">{value}</div>
-        <div class="kpi-subtitle">{subtitle}</div>
-    </div>
-    """
+from config import COLOR_MAMA, COLOR_COLO, make_kpi_card
 
 def render_financial_page(data_raw, filter_sia_func, filter_sih_func, selected_city, selected_months):
     st.markdown(f'<div class="section-title">💸 Gastos e Recursos Financeiros em {selected_city}</div>', unsafe_allow_html=True)

@@ -18,6 +18,16 @@ from exams import render_exams_page
 from treatments import render_treatments_page
 from patients import render_patients_page
 
+# Importações de configurações e estilos globais
+from config import (
+    COLOR_MAMA,
+    COLOR_COLO,
+    COLOR_MIXED,
+    RS_CITY_COORDS,
+    inject_global_css,
+    update_header_gradient
+)
+
 # Configuração da página do Streamlit
 st.set_page_config(
     page_title="Monitoramento de Câncer - Rio Grande do Sul (2025)",
@@ -26,103 +36,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Cores do Sistema de Design
-COLOR_MAMA = '#d63384'  # Rosa
-COLOR_COLO = '#008080'  # Teal/Ciano
-COLOR_MIXED = '#0d6efd' # Azul
-
-# Injeção de CSS personalizado para estética Premium
-def inject_custom_css():
-    st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
-    html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
-    }
-    
-    /* Layout dos Cards de KPI */
-    .kpi-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        margin-bottom: 25px;
-    }
-    
-    .kpi-card {
-        flex: 1;
-        min-width: 220px;
-        background-color: #ffffff;
-        border-radius: 10px;
-        padding: 18px 22px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.04);
-        border: 1px solid #f0f0f0;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    
-    .kpi-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.08);
-    }
-    
-    .kpi-title {
-        font-size: 12px;
-        color: #777777;
-        text-transform: uppercase;
-        font-weight: 600;
-        margin-bottom: 6px;
-        letter-spacing: 0.5px;
-    }
-    
-    .kpi-value {
-        font-size: 28px;
-        font-weight: 700;
-        color: #111111;
-        margin-bottom: 2px;
-    }
-    
-    .kpi-subtitle {
-        font-size: 11px;
-        color: #999999;
-    }
-    
-    /* Títulos de Página */
-    .page-title {
-        font-size: 32px;
-        font-weight: 700;
-        color: #111111;
-        margin-bottom: 5px;
-    }
-    
-    .page-subtitle {
-        font-size: 15px;
-        color: #666666;
-        margin-bottom: 25px;
-    }
-    
-    /* Seções */
-    .section-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: #222222;
-        margin-top: 25px;
-        margin-bottom: 15px;
-        border-bottom: 2px solid #f0f0f0;
-        padding-bottom: 8px;
-    }
-    
-    /* Alerts custom */
-    .custom-alert {
-        padding: 12px 18px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        font-size: 14px;
-        line-height: 1.5;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-inject_custom_css()
+# (Design system colors, CSS template, coordinates and helpers are configured in config.py)
 
 # Carga de dados otimizada com Cache do Streamlit (usando caminhos absolutos baseados no diretório-pai)
 @st.cache_data
@@ -175,6 +89,10 @@ disease = st.sidebar.radio(
 theme_color = COLOR_MAMA if disease == "Câncer de Mama" else COLOR_COLO
 disease_suffix = "mama" if disease == "Câncer de Mama" else "colo"
 
+# Aplica injeção de CSS global e degradê de cabeçalho dinâmico e animado
+inject_global_css(theme_color)
+update_header_gradient(disease)
+
 # Filtro de Município
 selected_city = st.sidebar.selectbox(
     "Município do Estabelecimento:",
@@ -197,41 +115,6 @@ st.sidebar.markdown("""
     • O filtro de <i>Município</i> é ignorado na aba <b>Geográfica</b> (exibe o mapa do RS).
 </div>
 """, unsafe_allow_html=True)
-
-# Dicionário de coordenadas de RS
-RS_CITY_COORDS = {
-    'porto alegre': (-30.0346, -51.2177),
-    'pelotas': (-31.7654, -52.3376),
-    'caxias do sul': (-29.1678, -51.1794),
-    'passo fundo': (-28.2584, -52.4089),
-    'santa maria': (-29.6842, -53.8069),
-    'ijuí': (-28.3877, -53.9189),
-    'ijui': (-28.3877, -53.9189),
-    'são leopoldo': (-29.7594, -51.1442),
-    'sao leopoldo': (-29.7594, -51.1442),
-    'santa cruz do sul': (-29.7181, -52.4306),
-    'taquara': (-29.6514, -50.7806),
-    'lajeado': (-29.4664, -51.9614),
-    'rio grande': (-32.0350, -52.0986),
-    'erechim': (-27.6341, -52.2739),
-    'uruguaiana': (-29.7547, -57.0864),
-    'cruz alta': (-28.6386, -53.6067),
-    'canoas': (-29.9181, -51.1781),
-    'santo ângelo': (-28.2992, -54.2631),
-    'santo angelo': (-28.2992, -54.2631),
-    'bento gonçalves': (-29.1683, -51.5178),
-    'bento goncalves': (-29.1683, -51.5178),
-    'santa rosa': (-27.8711, -54.4789),
-    'santiago': (-29.1914, -54.8656),
-    'são gabriel': (-30.3364, -54.2656),
-    'sao gabriel': (-30.3364, -54.2656),
-    'são borja': (-28.6583, -56.0044),
-    'sao borja': (-28.6583, -56.0044),
-    'bagé': (-31.3314, -54.1061),
-    'bage': (-31.3314, -54.1061),
-    'carazinho': (-28.2842, -52.7856),
-    'cachoeira do sul': (-30.0392, -52.8894)
-}
 
 # Funções auxiliares para filtrar dados
 def filter_sia_data(df, city, months):
@@ -261,8 +144,12 @@ def filter_sih_data(df, city, months):
 
 
 # ----------------- TÍTULO PRINCIPAL E NAVEGAÇÃO POR ABAS -----------------
-st.markdown('<div class="page-title">🎗️ Painel de Tratamento do Câncer de Mama/Colo de Útero no Rio Grande do Sul (2025)</div>', unsafe_allow_html=True)
-st.markdown(f'<div class="page-subtitle">Análise integrada do tratamento de Câncer de Mama e Câncer de Colo de Útero em 2025 pelo SUS no RS com foco em Porto Alegre.</div>', unsafe_allow_html=True)
+st.markdown("""
+<div class="main-header">
+    <h1>🎗️ Painel de Tratamento do Câncer de Mama/Colo de Útero no Rio Grande do Sul (2025)</h1>
+    <p">Análise integrada do tratamento de Câncer de Mama e Câncer de Colo de Útero em 2025 pelo SUS no RS com foco em Porto Alegre.</p>
+</div>    
+""", unsafe_allow_html=True)
 
 # Definição das Abas dentro da página
 tab_home, tab_finance, tab_demo, tab_geo, tab_patients, tab_exams, tab_treatments = st.tabs([

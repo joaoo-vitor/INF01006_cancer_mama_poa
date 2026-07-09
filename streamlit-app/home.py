@@ -6,15 +6,7 @@ from plots import (
     plot_hospitalizacoes_por_cid_altair
 )
 
-# Helper function to generate KPI cards
-def make_kpi_card(title, value, subtitle="", border_color="#d63384"):
-    return f"""
-    <div class="kpi-card" style="border-left: 5px solid {border_color}; font-family: 'Inter', sans-serif;">
-        <div class="kpi-title">{title}</div>
-        <div class="kpi-value">{value}</div>
-        <div class="kpi-subtitle">{subtitle}</div>
-    </div>
-    """
+from config import make_kpi_card
 
 def render_home_page(df_aq, df_ar, df_rd, data_raw, selected_city, selected_months, theme_color, disease):
     st.markdown(f'<div class="section-title">📊 Visão Geral - {disease} ({selected_city})</div>', unsafe_allow_html=True)
