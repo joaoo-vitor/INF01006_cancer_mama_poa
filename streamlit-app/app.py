@@ -17,6 +17,7 @@ from geographic import render_geographic_page
 from exams import render_exams_page
 from treatments import render_treatments_page
 from patients import render_patients_page
+from info import render_info_tab
 
 # Importações de configurações e estilos globais
 from config import (
@@ -254,4 +255,5 @@ with tab_treatments:
     )
 
 with tab_info:
-    st.markdown('<div class="section-title">ℹ️ Informações sobre o projeto</div>', unsafe_allow_html=True)
+    render_info_tab()
+    # st.markdown('<div class="section-title">ℹ️ Informações sobre o projeto</div>', unsafe_allow_html=True)
