@@ -1,9 +1,19 @@
 import streamlit as st
 
 # Cores do Sistema de Design
-COLOR_MAMA = '#d63384'  # Rosa (Outubro Rosa)
-COLOR_COLO = '#0065D8'  # Novo Azul (Câncer de Colo)
-COLOR_MIXED = '#0d6efd' # Azul Geral
+COLOR_MAMA = '#d63384'       # Rosa (Outubro Rosa)
+COLOR_MAMA_LIGHT = '#e87cb4' # Rosa Claro (Estágio Inicial)
+COLOR_MAMA_DARK = '#8a1f51'  # Rosa Escuro (Estágio Avançado)
+
+COLOR_COLO = '#0065D8'       # Novo Azul (Câncer de Colo)
+COLOR_COLO_LIGHT = '#66b2ff' # Azul Claro (Estágio Inicial)
+COLOR_COLO_DARK = '#003380'  # Azul Escuro (Estágio Avançado)
+
+COLOR_MIXED = '#0d6efd'      # Azul Geral
+
+# Cores específicas para representação de Gênero
+GENDER_ROSE = '#ff5c8a'      # Rose (Feminino)
+GENDER_BLUE = '#4a90e2'      # Blue (Masculino)
 
 # Coordenadas geográficas dos municípios do RS para mapeamento
 RS_CITY_COORDS = {
@@ -206,3 +216,48 @@ def make_kpi_card(title, value, subtitle="", border_color="#d63384"):
         <div class="kpi-subtitle">{subtitle}</div>
     </div>
     """
+
+
+# Mapeamento nacional de CNES para nomes fantasia de Hospitais do Rio Grande do Sul
+CNES_HOSPITALS_MAP = {
+    "2237571": "Hospital Nossa Senhora da Conceição",
+    "2261057": "Hospital de Clínicas Ijuí",
+    "2227932": "Hospital Bom Jesus",
+    "2237601": "Hospital de Clínicas (Porto Alegre)",
+    "2232022": "Hospital Centenário",
+    "2237253": "Irmandade da Santa Casa de Misericórdia de Porto Alegre",
+    "2255936": "Hospital Ana Nery",
+    "2246929": "Hospital de Clínicas (Passo Fundo)",
+    "2223538": "Hospital Geral (Caxias do Sul)",
+    "2707918": "Fundação Hospitalar Santa Terezinha de Erechin",
+    "2252287": "Hospital Bruno Born",
+    "2253054": "Santa Casa de Misericórdia de Pelotas",
+    "2254611": "Hospital Vida Saúde",
+    "2252694": "Hospital Escola da UFPEL",
+    "2232995": "Santa Casa do Rio Grande",
+    "2244306": "Hospital Universitário Santa Maria",
+    "2232014": "Hospital Nossa Senhora das Graças",
+    "2246988": "Hospital São Vicente de Paulo",
+    "2223546": "Pompéia Ecossistema de Saúde",
+    "2241021": "Hospital Tacchini",
+    "2261987": "Santa Casa de Caridade de Bagé",
+    "2262568": "Hospital São Lucas da PUCRS",
+    "2266474": "Hospital de Caridade e Beneficência",
+    "2259907": "Hospital Regional das Missões",
+    "2248190": "Santa Casa de Uruguaiana",
+    "2262274": "Hospital de Clínicas de Carazinho",
+    "2248204": "Santa Casa de São Gabriel",
+    "2263858": "Hospital de Caridade de São Vicente de Paulo",
+    "2244357": "Hospital de Caridade de Santiago",
+    "2693801": "Associação Hospitalar Vila Nova",
+    "2248298": "Hospital Ivan Goulart"
+}
+
+# Coordenadas geográficas aproximadas dos hospitais de Porto Alegre para o mapa de bolhas
+POA_HOSPITALS_COORDS = {
+    "2237571": (-30.0125, -51.1620),  # Hospital Nossa Senhora da Conceição
+    "2237601": (-30.0396, -51.2067),  # Hospital de Clínicas (Porto Alegre)
+    "2237253": (-30.0305, -51.2208),  # Irmandade da Santa Casa de Misericórdia de Porto Alegre
+    "2262568": (-30.0558, -51.1748),  # Hospital São Lucas da PUCRS
+    "2693801": (-30.1228, -51.2155)   # Associação Hospitalar Vila Nova
+}

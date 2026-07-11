@@ -2,6 +2,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import altair as alt
+import sys, os
+
+# Configuração de caminhos do Python para importações relativas e do config.py
+app_dir = os.path.dirname(__file__)
+sys.path.append(app_dir)
+sys.path.append(os.path.join(app_dir, '../streamlit-app'))
+
+from config import (
+    COLOR_MAMA,
+    COLOR_COLO,
+    COLOR_MAMA_LIGHT,
+    COLOR_MAMA_DARK,
+    COLOR_COLO_LIGHT,
+    COLOR_COLO_DARK
+)
 
 # Desativa o limite de 5000 linhas do Altair para evitar MaxRowsError no Jupyter Notebook
 alt.data_transformers.disable_max_rows()
@@ -602,7 +617,7 @@ def plot_distribuicao_permanencia(df, tipo_cancer="", city='Porto Alegre', month
     """
     Gera um gráfico boxplot de distribuição do tempo de permanência hospitalar (DIAS_PERM)
     por Diagnóstico Principal (DIAG_PRINC) de forma horizontal utilizando o Altair.
-    Garante que todos os rótulos do eixo Y (CID-10) apareçam legivelmente.
+    As cores das caixas adaptam-se de acordo com o tipo de câncer (Rosa para Mama, Azul para Colo).
     """
     df_filtered = df.copy()
     if city and city != "Todo o Estado":
@@ -617,17 +632,23 @@ def plot_distribuicao_permanencia(df, tipo_cancer="", city='Porto Alegre', month
     
     location_label = city if city else "Rio Grande do Sul"
     
+    # Determinar a cor temática do boxplot de acordo com o tipo de câncer (Rosa para Mama, Azul para Colo)
+    is_mama = "mama" in str(tipo_cancer).lower() or (not df_plot.empty and df_plot['DIAG_PRINC'].astype(str).str.startswith('C50').any())
+    theme_color = COLOR_MAMA if is_mama else COLOR_COLO
+    
     boxplot = alt.Chart(df_plot).mark_boxplot(
         extent='min-max',
         size=20,
-        color='#2b5c8f'
+        color=theme_color
     ).encode(
         y=alt.Y(
             'DIAG_PRINC:N', 
             title='Diagnóstico Principal (CID-10)',
             scale=alt.Scale(padding=0.5),
             axis=alt.Axis(
-                labelFontSize=10
+                labelFontSize=10,
+                # labelLimit=0,
+                offset=45
             )
         ),
         x=alt.X(
@@ -666,20 +687,24 @@ def plot_hospitalizacoes_por_cid_altair(df, tipo_cancer="", city='Porto Alegre',
         end_m = 202500 + months[1]
         df_filtered = df_filtered[(df_filtered['ANO_MES'] >= start_m) & (df_filtered['ANO_MES'] <= end_m)]
         
-    df_plot = df_filtered[['DIAG_PRINC']].dropna()
-    
+    df_plot = df_filtered[['DIAG_PRINC']].dropna().value_counts().reset_index()
+    df_plot.columns = ['Diagnostico', 'Quantidade']
+    total = df_plot['Quantidade'].sum()
+    df_plot['Porcentagem'] = df_plot['Quantidade'] / total if total > 0 else 0.0
+
     location_label = city if city else "Rio Grande do Sul"
     
     pie = alt.Chart(df_plot).mark_arc().encode(
-        theta=alt.Theta('count():Q', title='Quantidade de Internações'),
+        theta=alt.Theta('Quantidade:Q', title='Quantidade de Internações'),
         color=alt.Color(
-            'DIAG_PRINC:N', 
+            'Diagnostico:N', 
             title='Código CID-10', 
             scale=alt.Scale(scheme='tableau10')
         ),
         tooltip=[
-            alt.Tooltip('DIAG_PRINC:N', title='CID-10'),
-            alt.Tooltip('count():Q', title='Internações')
+            alt.Tooltip('Diagnostico:N', title='CID-10'),
+            alt.Tooltip('Quantidade:Q', title='Internações'),
+            alt.Tooltip('Porcentagem:Q', title='Porcentagem', format='.1%')
         ]
     ).properties(
         title={
@@ -792,7 +817,16 @@ def plot_chemotherapies_by_month_altair(df, city='Porto Alegre', months=None, co
         202505: 'Mai', 202506: 'Jun', 202507: 'Jul', 202508: 'Ago',
         202509: 'Set', 202510: 'Out', 202511: 'Nov', 202512: 'Dez'
     }
-    all_months = pd.DataFrame({'AP_MVM': list(months_map.keys()), 'Mes': list(months_map.values())})
+    full_months_map = {
+        202501: 'Janeiro', 202502: 'Fevereiro', 202503: 'Março', 202504: 'Abril',
+        202505: 'Maio', 202506: 'Junho', 202507: 'Julho', 202508: 'Agosto',
+        202509: 'Setembro', 202510: 'Outubro', 202511: 'Novembro', 202512: 'Dezembro'
+    }
+    all_months = pd.DataFrame({
+        'AP_MVM': list(months_map.keys()), 
+        'Mes': list(months_map.values()),
+        'MesCompleto': list(full_months_map.values())
+    })
     monthly_counts = pd.merge(all_months, monthly_counts, on='AP_MVM', how='left').fillna({'Quantidade': 0})
     monthly_counts['Quantidade'] = monthly_counts['Quantidade'].astype(int)
     
@@ -813,7 +847,7 @@ def plot_chemotherapies_by_month_altair(df, city='Porto Alegre', months=None, co
     bar = alt.Chart(monthly_counts).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4, color=color, opacity=0.85).encode(
         x=alt.X('Mes:N', sort=None, title='Mês de Processamento'),
         y=alt.Y('Quantidade:Q', title='Número de Procedimentos'),
-        tooltip=[alt.Tooltip('Mes:N', title='Mês'), alt.Tooltip('Quantidade:Q', title='Procedimentos')]
+        tooltip=[alt.Tooltip('MesCompleto:N', title='Mês'), alt.Tooltip('Quantidade:Q', title='Procedimentos')]
     )
     
     # Linha e marcadores por cima
@@ -860,7 +894,16 @@ def plot_stacked_chemotherapies_by_month_altair(df_colo, df_mama, city='Porto Al
         202505: 'Mai', 202506: 'Jun', 202507: 'Jul', 202508: 'Ago',
         202509: 'Set', 202510: 'Out', 202511: 'Nov', 202512: 'Dez'
     }
-    all_months = pd.DataFrame({'AP_MVM': list(months_map.keys()), 'Mes': list(months_map.values())})
+    full_months_map = {
+        202501: 'Janeiro', 202502: 'Fevereiro', 202503: 'Março', 202504: 'Abril',
+        202505: 'Maio', 202506: 'Junho', 202507: 'Julho', 202508: 'Agosto',
+        202509: 'Setembro', 202510: 'Outubro', 202511: 'Novembro', 202512: 'Dezembro'
+    }
+    all_months = pd.DataFrame({
+        'AP_MVM': list(months_map.keys()), 
+        'Mes': list(months_map.values()),
+        'MesCompleto': list(full_months_map.values())
+    })
     df_combined = pd.merge(all_months, colo_counts, on='AP_MVM', how='left').fillna(0)
     df_combined = pd.merge(df_combined, mama_counts, on='AP_MVM', how='left').fillna(0)
     
@@ -870,7 +913,7 @@ def plot_stacked_chemotherapies_by_month_altair(df_colo, df_mama, city='Porto Al
     if months:
         df_combined = df_combined.iloc[months[0]-1:months[1]]
         
-    df_long = df_combined.melt(id_vars=['Mes'], value_vars=['Colo', 'Mama'], var_name='Cancer', value_name='Quantidade')
+    df_long = df_combined.melt(id_vars=['Mes', 'MesCompleto'], value_vars=['Colo', 'Mama'], var_name='Cancer', value_name='Quantidade')
     df_long['Cancer'] = df_long['Cancer'].map({'Colo': 'Câncer de Colo de Útero', 'Mama': 'Câncer de Mama'})
     
     location_label = city if city else "Rio Grande do Sul"
@@ -879,7 +922,7 @@ def plot_stacked_chemotherapies_by_month_altair(df_colo, df_mama, city='Porto Al
         x=alt.X('Mes:N', sort=None, title='Mês de Processamento'),
         y=alt.Y('Quantidade:Q', title='Número de Procedimentos'),
         color=alt.Color('Cancer:N', scale=alt.Scale(domain=['Câncer de Colo de Útero', 'Câncer de Mama'], range=['#008080', '#d63384']), title='Tipo de Câncer'),
-        tooltip=[alt.Tooltip('Mes:N', title='Mês'), alt.Tooltip('Cancer:N', title='Câncer'), alt.Tooltip('Quantidade:Q', title='Procedimentos')]
+        tooltip=[alt.Tooltip('MesCompleto:N', title='Mês'), alt.Tooltip('Cancer:N', title='Câncer'), alt.Tooltip('Quantidade:Q', title='Procedimentos')]
     ).properties(
         title={
             "text": f"Comparativo de Quimioterapias em {location_label} por Mês (2025)",
@@ -922,14 +965,20 @@ def plot_residents_vs_non_residents_altair(df, treatment_type="Quimioterapia", c
         202505: 'Mai', 202506: 'Jun', 202507: 'Jul', 202508: 'Ago',
         202509: 'Set', 202510: 'Out', 202511: 'Nov', 202512: 'Dez'
     }
+    full_months_map = {
+        202501: 'Janeiro', 202502: 'Fevereiro', 202503: 'Março', 202504: 'Abril',
+        202505: 'Maio', 202506: 'Junho', 202507: 'Julho', 202508: 'Agosto',
+        202509: 'Setembro', 202510: 'Outubro', 202511: 'Novembro', 202512: 'Dezembro'
+    }
     df_months = pd.DataFrame(index=months_map.keys())
     counts = df_months.join(counts).fillna(0).astype(int)
     counts['Mes'] = counts.index.map(months_map)
+    counts['MesCompleto'] = counts.index.map(full_months_map)
     
     if months:
         counts = counts.iloc[months[0]-1:months[1]]
         
-    df_long = counts.melt(id_vars=['Mes'], value_vars=[f'Residente de {city_name}', 'Residente de Outro Município'], var_name='Origem', value_name='Quantidade')
+    df_long = counts.melt(id_vars=['Mes', 'MesCompleto'], value_vars=[f'Residente de {city_name}', 'Residente de Outro Município'], var_name='Origem', value_name='Quantidade')
     
     # Cores
     is_colo = False
@@ -953,10 +1002,10 @@ def plot_residents_vs_non_residents_altair(df, treatment_type="Quimioterapia", c
         color_range = ['#0d6efd', '#9ec5fe']
         cancer_type = 'Mama e Colo de Útero'
     elif is_mama:
-        color_range = ['#d63384', '#ff9ebb']
+        color_range = ['#d63384', '#e87cb4']  # Rosa da config e rosa claro
         cancer_type = 'Câncer de Mama'
     else:
-        color_range = ['#008080', '#80cbc4']
+        color_range = ['#0065D8', '#66b2ff']  # Novo azul da config e azul claro
         cancer_type = 'Câncer de Colo de Útero'
         
     location_label = city if city else "Rio Grande do Sul"
@@ -965,7 +1014,7 @@ def plot_residents_vs_non_residents_altair(df, treatment_type="Quimioterapia", c
         x=alt.X('Mes:N', sort=None, title='Mês de Processamento'),
         y=alt.Y('Quantidade:Q', title='Número de Procedimentos'),
         color=alt.Color('Origem:N', scale=alt.Scale(domain=[resident_label, 'Residente de Outro Município'], range=color_range), title='Origem do Paciente'),
-        tooltip=[alt.Tooltip('Mes:N', title='Mês'), alt.Tooltip('Origem:N', title='Origem'), alt.Tooltip('Quantidade:Q', title='Procedimentos')]
+        tooltip=[alt.Tooltip('MesCompleto:N', title='Mês'), alt.Tooltip('Origem:N', title='Origem'), alt.Tooltip('Quantidade:Q', title='Procedimentos')]
     ).properties(
         title={
             "text": f"{treatment_type}s em {location_label} (2025)",
@@ -1011,10 +1060,14 @@ def plot_chemo_stage_comparison_altair(df_colo, df_mama, city='Porto Alegre', mo
     mama_stages.columns = ['Estagio', 'Quantidade']
     mama_stages['Cancer'] = 'Câncer de Mama'
     
-    # Common color scale definition
-    color_scale = alt.Scale(
+    # Tones for each disease (lighter tone for initial stage, darker tone for advanced stage)
+    scale_colo = alt.Scale(
         domain=['Inicial (Estágios 0-2)', 'Avançado (Estágios 3-4)'],
-        range=['#008080', '#e57373'] # Teal and Soft Red
+        range=[COLOR_COLO_LIGHT, COLOR_COLO_DARK]
+    )
+    scale_mama = alt.Scale(
+        domain=['Inicial (Estágios 0-2)', 'Avançado (Estágios 3-4)'],
+        range=[COLOR_MAMA_LIGHT, COLOR_MAMA_DARK]
     )
 
     if colo_stages.empty:
@@ -1035,7 +1088,7 @@ def plot_chemo_stage_comparison_altair(df_colo, df_mama, city='Porto Alegre', mo
     if not colo_stages.empty:
         chart_colo = alt.Chart(colo_stages).mark_arc(innerRadius=50, outerRadius=90).encode(
             theta=alt.Theta(field='Quantidade', type='quantitative'),
-            color=alt.Color(field='Estagio', type='nominal', scale=color_scale, title='Estágio UICC'),
+            color=alt.Color(field='Estagio', type='nominal', scale=scale_colo, title='Estágio UICC (Colo)'),
             tooltip=[
                 alt.Tooltip('Cancer:N', title='Câncer'),
                 alt.Tooltip('Estagio:N', title='Estágio'),
@@ -1069,7 +1122,7 @@ def plot_chemo_stage_comparison_altair(df_colo, df_mama, city='Porto Alegre', mo
     if not mama_stages.empty:
         chart_mama = alt.Chart(mama_stages).mark_arc(innerRadius=50, outerRadius=90).encode(
             theta=alt.Theta(field='Quantidade', type='quantitative'),
-            color=alt.Color(field='Estagio', type='nominal', scale=color_scale, title='Estágio UICC'),
+            color=alt.Color(field='Estagio', type='nominal', scale=scale_mama, title='Estágio UICC (Mama)'),
             tooltip=[
                 alt.Tooltip('Cancer:N', title='Câncer'),
                 alt.Tooltip('Estagio:N', title='Estágio'),
@@ -1099,11 +1152,11 @@ def plot_chemo_stage_comparison_altair(df_colo, df_mama, city='Porto Alegre', mo
             height=250
         )
 
-    # Combine charts with shared legend
+    # Combine charts with independent legends
     combined = alt.hconcat(
         chart_colo, chart_mama, spacing=40
     ).resolve_scale(
-        color='shared'
+        color='independent'
     ).properties(
         title={
             "text": f"Estadiamento no Início da Quimioterapia em {location_label} (2025)",
@@ -1112,7 +1165,7 @@ def plot_chemo_stage_comparison_altair(df_colo, df_mama, city='Porto Alegre', mo
     ).configure_title(
         fontSize=15,
         subtitleFontSize=11,
-        anchor='middle'
+        anchor='start'
     ).configure_legend(
         orient='bottom',
         columns=2,

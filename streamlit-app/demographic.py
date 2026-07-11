@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+from config import GENDER_ROSE, GENDER_BLUE
 
 def render_demographic_page(df_aq, df_ar, df_rd, selected_city, selected_months, theme_color, disease):
     st.markdown(f'<div class="section-title">👥 Perfil dos Pacientes em Atendimento - {disease} ({selected_city})</div>', unsafe_allow_html=True)
@@ -20,13 +21,23 @@ def render_demographic_page(df_aq, df_ar, df_rd, selected_city, selected_months,
         df_ages = pd.concat(ages, ignore_index=True).dropna()
         df_ages['Idade'] = df_ages['Idade'].astype(int)
         
+        is_mama = disease == "Câncer de Mama"
+        age_colors = ['#d63384', '#e87cb4', '#8a1f51'] if is_mama else ['#0065D8', '#66b2ff', '#003380']
+
         chart_age = alt.Chart(df_ages).mark_area(
             opacity=0.6,
             interpolate='step'
         ).encode(
             x=alt.X('Idade:Q', bin=alt.Bin(maxbins=30), title='Idade do Paciente (Anos)'),
             y=alt.Y('count():Q', stack=None, title='Frequência de Atendimentos'),
-            color=alt.Color('Fonte:N', scale=alt.Scale(scheme='set2'), title='Fonte dos Dados'),
+            color=alt.Color(
+                'Fonte:N', 
+                scale=alt.Scale(
+                    domain=['Quimioterapia (SIA)', 'Radioterapia (SIA)', 'Internação (SIH)'],
+                    range=age_colors
+                ), 
+                title='Fonte dos Dados'
+            ),
             tooltip=[alt.Tooltip('Idade:Q', title='Faixa de Idade'), alt.Tooltip('count():Q', title='Pacientes')]
         ).properties(
             width='container',
@@ -92,10 +103,28 @@ def render_demographic_page(df_aq, df_ar, df_rd, selected_city, selected_months,
             df_genders['Gênero'] = df_genders['Sexo'].map({'F': 'Feminino', 'M': 'Masculino'}).fillna('Não Informado')
             gender_counts = df_genders['Gênero'].value_counts().reset_index()
             
+            # Garantir tamanho mínimo de fatia de 5% do total para categorias com count > 0, para fins de visualização legível/hover
+            total_cases = gender_counts['count'].sum()
+            if total_cases > 0:
+                min_threshold = total_cases * 0.05
+                gender_counts['DisplayValue'] = gender_counts['count'].apply(lambda x: max(x, min_threshold) if x > 0 else 0)
+            else:
+                gender_counts['DisplayValue'] = gender_counts['count']
+                
             chart_gender = alt.Chart(gender_counts).mark_arc(innerRadius=40).encode(
-                theta='count:Q',
-                color=alt.Color('Gênero:N', scale=alt.Scale(domain=['Feminino', 'Masculino', 'Não Informado'], range=['#e83e8c', '#17a2b8', '#6c757d'])),
-                tooltip=[alt.Tooltip('Gênero:N'), alt.Tooltip('count:Q', title='Quantidade')]
+                theta=alt.Theta(field='DisplayValue', type='quantitative'),
+                color=alt.Color(
+                    'Gênero:N', 
+                    scale=alt.Scale(
+                        domain=['Feminino', 'Masculino', 'Não Informado'], 
+                        range=[GENDER_ROSE, GENDER_BLUE, '#adb5bd']
+                    ),
+                    title='Gênero'
+                ),
+                tooltip=[
+                    alt.Tooltip('Gênero:N'),
+                    alt.Tooltip('count:Q', title='Quantidade Real')
+                ]
             ).properties(
                 height=300
             )

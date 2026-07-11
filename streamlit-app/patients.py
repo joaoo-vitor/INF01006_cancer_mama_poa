@@ -84,6 +84,52 @@ def build_patient_base(df_aq, df_ar):
     return pd.concat(registros, ignore_index=True)
 
 
+def plot_venn_diagram(qty_quimio_only, qty_radio_only, qty_both, disease):
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(5.0, 2.8), dpi=300)
+    ax.set_axis_off()
+    
+    # Define cores baseadas na doença
+    is_mama = disease == "Câncer de Mama"
+    if is_mama:
+        color_left = '#d63384'       # Rosa
+        color_right = '#8a1f51'      # Rosa Escuro
+        color_edge_left = '#a31d59'
+        color_edge_right = '#591032'
+    else:
+        color_left = '#0065D8'       # Novo Azul
+        color_right = '#003380'      # Azul Escuro
+        color_edge_left = '#004aa6'
+        color_edge_right = '#001f4d'
+        
+    # Desenhar os círculos
+    circle_left = plt.Circle((-0.5, 0), 1.0, facecolor=color_left, alpha=0.55, edgecolor=color_edge_left, linewidth=2.0)
+    circle_right = plt.Circle((0.5, 0), 1.0, facecolor=color_right, alpha=0.55, edgecolor=color_edge_right, linewidth=2.0)
+    
+    ax.add_patch(circle_left)
+    ax.add_patch(circle_right)
+    
+    # Definir limites e proporção
+    ax.set_xlim(-1.7, 1.7)
+    ax.set_ylim(-1.2, 1.3)
+    ax.set_aspect('equal')
+    
+    # Adicionar títulos acima dos círculos
+    ax.text(-0.7, 1.05, "Fez Quimioterapia", fontsize=9, fontweight='bold', color='#333333', ha='center')
+    ax.text(0.7, 1.05, "Fez Radioterapia", fontsize=9, fontweight='bold', color='#333333', ha='center')
+    
+    # Adicionar contagens e rótulos
+    ax.text(-0.9, 0, f"{qty_quimio_only:,}".replace(",", ".") + "\npacientes", fontsize=9, fontweight='bold', color='#111111', ha='center', va='center')
+    ax.text(0.9, 0, f"{qty_radio_only:,}".replace(",", ".") + "\npacientes", fontsize=9, fontweight='bold', color='#111111', ha='center', va='center')
+    ax.text(0, 0, f"{qty_both:,}".replace(",", ".") + "\npacientes", fontsize=10, fontweight='bold', color='#000000', ha='center', va='center')
+    
+    plt.tight_layout()
+    fig.patch.set_facecolor('none')  # Fundo transparente
+    ax.set_facecolor('none')
+    
+    return fig
+
+
 def render_patients_page(df_aq, df_ar, df_rd, selected_city, selected_months, theme_color, disease):
     st.markdown(
         f'<div class="section-title">🧍 Pacientes Únicos e Intensidade de Tratamento - {disease} ({selected_city})</div>',
@@ -176,31 +222,6 @@ def render_patients_page(df_aq, df_ar, df_rd, selected_city, selected_months, th
             unsafe_allow_html=True
         )
 
-    st.markdown('<div class="section-title">🔁 Sobreposição entre Quimioterapia e Radioterapia</div>', unsafe_allow_html=True)
-
-    overlap_df = pd.DataFrame([
-        {"Grupo": "Só quimioterapia", "Pacientes": len(pacientes_so_quimio)},
-        {"Grupo": "Só radioterapia", "Pacientes": len(pacientes_so_radio)},
-        {"Grupo": "Quimioterapia e radioterapia", "Pacientes": len(pacientes_ambos)},
-    ])
-
-    chart_overlap = alt.Chart(overlap_df).mark_bar(
-        cornerRadiusTopLeft=4,
-        cornerRadiusTopRight=4,
-        color=theme_color
-    ).encode(
-        x=alt.X("Grupo:N", sort="-y", title="Tipo de percurso terapêutico"),
-        y=alt.Y("Pacientes:Q", title="Pacientes únicos"),
-        tooltip=[
-            alt.Tooltip("Grupo:N"),
-            alt.Tooltip("Pacientes:Q", title="Pacientes")
-        ]
-    ).properties(
-        height=350
-    )
-
-    st.altair_chart(chart_overlap, use_container_width=True)
-
     st.markdown('<div class="section-title">📊 Procedimentos x Pacientes por Modalidade</div>', unsafe_allow_html=True)
 
     modalidade_df = pd.DataFrame([
@@ -223,13 +244,23 @@ def render_patients_page(df_aq, df_ar, df_rd, selected_city, selected_months, th
         value_name="Quantidade"
     )
 
+    is_mama = disease == "Câncer de Mama"
+    metric_colors = ['#d63384', '#e87cb4'] if is_mama else ['#0065D8', '#66b2ff']
+
     chart_modalidade = alt.Chart(modalidade_long).mark_bar(
         cornerRadiusTopLeft=4,
         cornerRadiusTopRight=4
     ).encode(
         x=alt.X("Modalidade:N", title="Modalidade de tratamento"),
         y=alt.Y("Quantidade:Q", title="Quantidade"),
-        color=alt.Color("Métrica:N", title="Métrica"),
+        color=alt.Color(
+            "Métrica:N", 
+            scale=alt.Scale(
+                domain=["Procedimentos", "Pacientes únicos"],
+                range=metric_colors
+            ),
+            title="Métrica"
+        ),
         xOffset="Métrica:N",
         tooltip=[
             alt.Tooltip("Modalidade:N"),
@@ -373,3 +404,16 @@ def render_patients_page(df_aq, df_ar, df_rd, selected_city, selected_months, th
         ou radioterapia. Esta análise serve para diferenciar volume de atendimentos de quantidade de pessoas.
     </div>
     """, unsafe_allow_html=True)
+
+    st.markdown('<div class="section-title">🔁 Sobreposição entre Quimioterapia e Radioterapia</div>', unsafe_allow_html=True)
+
+    # Renderizar o Diagrama de Venn com proporções e tamanho menores no final da página
+    fig_venn = plot_venn_diagram(
+        len(pacientes_so_quimio),
+        len(pacientes_so_radio),
+        len(pacientes_ambos),
+        disease
+    )
+    col_v_l, col_v_c, col_v_r = st.columns([1.5, 3, 1.5])
+    with col_v_c:
+        st.pyplot(fig_venn, clear_figure=True, width="content")

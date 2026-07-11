@@ -22,7 +22,6 @@ from patients import render_patients_page
 from config import (
     COLOR_MAMA,
     COLOR_COLO,
-    COLOR_MIXED,
     RS_CITY_COORDS,
     inject_global_css,
     update_header_gradient
