@@ -1,7 +1,7 @@
 # Tratamento do Câncer de Mama em Porto Alegre - 2025
 Trabalho final da disciplina de Projeto de Banco de Dados: Análise do tratamento de câncer de mama e câncer de colo de útero em Porto Alegre em 2025.
 
-## Datasets disponíveis
+## Datasets usados
 Bases de dados em CSV usados para o trabalho.
 
 - AQRSaamm são registros de quimioterapia no Rio Grande do Sul no ano 20aa e no mês mm. Dicionário de dados disponível em 'Dicionário SIA.pdf'
@@ -9,6 +9,10 @@ Bases de dados em CSV usados para o trabalho.
 - ARRSaamm são registros de radioterapia no Rio Grande do Sul no ano 20aa e no mês mm. Dicionário de dados disponível em 'Dicionário SIA.pdf'.
 
 - RDRSaamm são registros de internações hospitalares e dos procedimentos associados no Rio Grande do Sul no ano 20aa e no mês mm. Dicionário de dados disponível em 'Dicionário SIH.pdf'. 
+
+- SISCANPOA25exame são registros de contagem de um determinado exame em hospitais da cidade de Porto Alegre em 2025.
+
+- SISCANRS25exame são registros de contagem de um determinado exame em cidades do Rio Grande do Sul.
 
 ### Preparação dos dados (data cleaning)
 Os dados foram baixados do repositório FTP do DataSUS, suas colunas foram convertidas usando arquivos de definição (DEF) e foram transformados em csv.

@@ -151,14 +151,15 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Definição das Abas dentro da página
-tab_home, tab_finance, tab_demo, tab_geo, tab_patients, tab_exams, tab_treatments = st.tabs([
+tab_home, tab_finance, tab_demo, tab_geo, tab_patients, tab_exams, tab_treatments, tab_info = st.tabs([
     "🏠 Página Inicial", 
     "💸 Informações Financeiras", 
     "👥 Informações Demográficas", 
     "🗺️ Análise Geográfica", 
     "🧍 Pacientes Únicos",
     "🔬 Exames (SISCAN)",
-    "Tratamentos"
+    "💊 Tratamentos",
+    "ℹ️ Info"
 ])
 
 
@@ -234,7 +235,9 @@ with tab_patients:
 with tab_exams:
     render_exams_page(
         disease=disease,
-        theme_color=theme_color
+        theme_color=theme_color,
+        selected_city=selected_city,
+        selected_months=selected_months
     )
 
 with tab_treatments:
@@ -249,3 +252,6 @@ with tab_treatments:
         theme_color=theme_color,
         disease=disease
     )
+
+with tab_info:
+    st.markdown('<div class="section-title">ℹ️ Informações sobre o projeto</div>', unsafe_allow_html=True)
