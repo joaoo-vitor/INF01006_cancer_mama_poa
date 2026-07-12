@@ -25,17 +25,6 @@ Várias colunas com a descrição dizendo "zerada" foram removidas.
 
 
 
-## Como gerar dados agregados (2025) para analise de dados?
-Dentro do diretório scripts, use o scrip create_file_aggretations.sh:
-```bash
-cd scripts
-sh ./create_file_aggretations.sh
-```
-Isso vai criar seis arquivos, um para cada dataset, juntando os dados do ano de 2025.
-
-**Obs**, para rodar no windows, você pode utilizar o Git Bash.
-
-
 ## Como instalar o ambiente virtual para análise de dados?
 Este projeto utiliza o **Pipenv** para gerenciar dependências e o ambiente virtual de forma integrada. Siga os passos abaixo para configurar o ambiente em sua máquina.
 
@@ -62,8 +51,37 @@ pipenv install
 ```
 Assim, um novo ambiente virtual será criado ("INF01006_cancer_mama_poa") e você poderá utilizá-lo para as análises desse repositório.
 
+---
+
 ## Como rodar o dashboard streamlit?
-O projeto consiste em dashboard interativo usando a biblioteca [Streamlit](https://streamlit.io/components). Para rodá-lo, basta rodar o comando
+
+### Opção 1: Execução Automática Rápida (Recomendada 🌟)
+Colocamos um script no diretório raiz do repositório chamado `run.sh`. Ele **instala automaticamente o ambiente virtual e dependências via Pipenv**, verifica se os seis arquivos agregados de dados existem na pasta `datasets/` (gerando-os se necessário), e inicia o painel do Streamlit.
+
+Para executá-lo, use o terminal ou o **Git Bash** (no Windows) a partir da raiz do repositório:
+```bash
+sh run.sh
+```
+
+### Opção 2: Execução Passo a Passo (Alternativa Manual)
+Se preferir executar cada passo manualmente, é **obrigatório** instalar o ambiente virtual primeiro. Siga esta ordem:
+
+#### 1. Instalar o ambiente virtual do projeto:
+```bash
+pipenv install
+```
+
+#### 2. Gerar os dados agregados para 2025:
+Entre no diretório `scripts/` e execute o script `create_file_agreggations.sh`:
+```bash
+cd scripts
+sh create_file_agreggations.sh
+cd ..
+```
+Isso vai criar os seis arquivos agregados unindo os dados do ano de 2025.
+
+#### 3. Iniciar o dashboard do Streamlit:
+A partir do diretório raiz do projeto, execute:
 ```bash
 pipenv run streamlit run streamlit-app/app.py
 ```
