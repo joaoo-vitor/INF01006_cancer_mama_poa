@@ -200,7 +200,7 @@ def render_exams_page(disease, theme_color, selected_city, selected_months):
         pie_df['Cidade'] = pie_df['Local'].str.title()
         total_exams = pie_df['Quantidade'].sum()
         pie_df['Porcentagem_Formatada'] = pie_df['Quantidade'].apply(
-            lambda x: f"{(x / total_exams) * 100:.2f}" if total_exams > 0 else "0.00"
+            lambda x: f"{(x / total_exams)}" if total_exams > 0 else "0.00"
         )
         
         # Donut Chart
@@ -214,8 +214,8 @@ def render_exams_page(disease, theme_color, selected_city, selected_months):
             ),
             tooltip=[
                 alt.Tooltip('Cidade:N', title='Cidade'),
-                alt.Tooltip('Quantidade:Q', title='Exames Realizados', format=',d')
-                alt.Tooltip("Porcentagem_Formatada:Q", title="Proporção", format=".2%")
+                alt.Tooltip('Quantidade:Q', title='Exames Realizados', format=',d'),
+                alt.Tooltip("Porcentagem_Formatada:Q", title="Porcentagem", format=".2%")
             ]
         ).properties(
             height=350

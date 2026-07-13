@@ -259,5 +259,5 @@ POA_HOSPITALS_COORDS = {
     "2237601": (-30.0396, -51.2067),  # Hospital de Clínicas (Porto Alegre)
     "2237253": (-30.0305, -51.2208),  # Irmandade da Santa Casa de Misericórdia de Porto Alegre
     "2262568": (-30.0558, -51.1748),  # Hospital São Lucas da PUCRS
-    "2693801": (-30.1228, -51.2155)   # Associação Hospitalar Vila Nova
+    "2693801": (-30.1142, -51.2063)   # Associação Hospitalar Vila Nova
 }
